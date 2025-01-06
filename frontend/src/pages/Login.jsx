@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // Import Link from react-router-dom
+import { Link , useNavigate} from 'react-router-dom'; // Import Link from react-router-dom
 import api from '../services/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -14,6 +15,8 @@ const Login = () => {
       console.log('Login success:', response.data);
       alert('Login successful');
       localStorage.setItem('token', response.data.token); // Stores the JWT
+
+      navigate('/chat');
     } 
     
     catch (error) {
