@@ -2,7 +2,7 @@ import pool from '../config/db.js';
 
 // Controller to fetch all users
 export const getAllUsers = async (req, res) => {
-    const userId = req.user.id; // Extract user ID from the authenticated user
+    const userId = req.user.email; // Extract user ID from the authenticated user
 
     try {
         // Query to get all users, excluding the currently authenticated user

@@ -14,8 +14,10 @@ const Login = () => {
       const response = await api.post('auth/login', { email, password });
       console.log('Login success:', response.data);
       alert('Login successful');
-      localStorage.setItem('token', response.data.token); // Stores the JWT
 
+      localStorage.setItem('token', response.data.token); // Stores the JWT
+      localStorage.setItem('email', email); // Store the email for future use
+      
       navigate('/chat');
     } 
     

@@ -3,7 +3,7 @@ import pool from '../config/db.js'
 //controller for fetching message 
 export const getMessage = async (req , res) =>{
 
-    const userId = req.user.id //extract user ID from the authenticated user
+    const userId = req.user.email //extract user ID from the authenticated user
     const { groupId } = req.query;
 
     try 

@@ -1,5 +1,5 @@
 import React ,{ useState} from "react";
-import api from '../services/api'
+import socket from '../services/socket'
 
 const MessageInput= ( {selectedUser })=>{
     const[message , setMessage]= useState('');
@@ -7,13 +7,14 @@ const MessageInput= ( {selectedUser })=>{
     const sendMessage = async ()=>{
         
         if(selectedUser && message.trim()){
-            try {
-                await api.post('/message/messages' , {receiverId:selectedUser.id , message});
-                setMessage('');
-            } 
-            catch (error) {
-                console.error('Error sending message:' , error);
-            }
+
+            const senderEmail = localStorage.getItem('email');
+            socket.emit('private_message', { 
+                senderEmail: senderEmail, 
+                receiverEmail: selectedUser.email, 
+                message 
+            });
+            setMessage('');
         }
     };
 
