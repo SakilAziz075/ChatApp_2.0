@@ -1,39 +1,55 @@
-import React, { useEffect, useState } from "react";
-import api from '../services/api';
+import React, { useEffect , useState } from "react";
+import { Link} from 'react-router-dom'
+import {fetchAllUsers } from '../services/userService'
 
-const Sidebar = ({ onSelectUser }) => {
-    const [users, setUsers] = useState([]);
+const Sidebar = ()=>{
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const response = await api.get('/user/profile');
-                console.log(response.data); // Log the response to verify its structure
-                setUsers(response.data.users || []); // Ensure it's always an array
-            } catch (error) {
-                console.error('Error fetching users', error);
+        const[users, setUsers] = useState([])
+        const[loading,setLoading] = useState([])
+
+
+        useEffect( ()=>{
+
+            const getUsers = async ()=>{
+               
+                try {
+                    const users = await fetchAllUsers();
+                    setUsers(users);
+                } 
+                
+                catch (error) {
+                    console.error('Error fetching users:', error)    
+                }
+
+                finally
+                {
+                    setLoading(false)
+                }
             }
-        };
 
-        fetchUsers();
-    }, []);
+            getUsers()
 
-    return (
-        <div className="sidebar">
-            <h2>Users</h2>
-            <ul>
-                {users.length > 0 ? (
-                    users.map((user) => (
-                        <li key={user.id} onClick={() => onSelectUser(user)}>
-                            {user.email}
+        }, []);
+
+        if (loading) {
+            return <div className="w-64 bg-gray-800 text-white p-4">Loading users...</div>;
+        }
+
+        return (
+            <div className="w-64 bg-gray-800 text-white p-4">
+                <h2 className="text-xl font-bold mb-4">Users</h2>
+                <ul className="space-y-2">
+                    {users.map(user => (
+                        <li key={user.email}>
+                            <Link to={`/chat/${user.email}`} className="block p-2 rounded hover:bg-gray-700">
+                                {user.fullName}
+                            </Link>
                         </li>
-                    ))
-                ) : (
-                    <li>No users available</li> // Fallback message when no users are available
-                )}
-            </ul>
-        </div>
-    );
-};
+                    ))}
+                </ul>
+            </div>
+        );
+    };
 
-export default Sidebar;
+
+    export default Sidebar;

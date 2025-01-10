@@ -1,6 +1,30 @@
+// src/services/socket.js
 import { io } from 'socket.io-client';
 
-// Connecting to the backend WebSocket server
-const socket = io('http://localhost:3000');
+let socket;
 
-export default socket;
+export const getSocket = () => {
+  if (!socket) {
+    // Initialize the socket connection
+    socket = io('http://localhost:3000', { // Replace with your backend URL
+      auth: {
+        token: localStorage.getItem('token'), // Attach JWT token for authentication
+      },
+    });
+
+    // Handle reconnection and other socket events
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+    });
+  }
+
+  return socket;
+};

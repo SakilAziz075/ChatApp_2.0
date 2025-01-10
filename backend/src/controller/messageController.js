@@ -3,7 +3,7 @@ import pool from '../config/db.js'
 //controller for fetching message 
 export const getMessage = async (req , res) =>{
 
-    const userId = req.user.email //extract user ID from the authenticated user
+    const userEmail = req.user.email //extract user ID from the authenticated user
     const { groupId } = req.query;
 
     try 
@@ -12,13 +12,13 @@ export const getMessage = async (req , res) =>{
         let values = [];
 
         if(groupId){
-            query = 'SELECT * FROM GroupMessages WHERE group_id = ? ORDER BY sent_at DESC';
+            query = 'SELECT * FROM GroupMessages WHERE group_id = ? ORDER BY sent_at ASC';
             values = [groupId];
         }
 
         else{
-            query = 'SELECT * FROM Messages WHERE sender_id = ? OR receiver_id = ? ORDER BY sent_at DESC';
-            values = [userId, userId];
+            query = 'SELECT * FROM Messages WHERE sender_id = ? OR receiver_id = ? ORDER BY sent_at ASC';
+            values = [userEmail, userEmail];
         }
 
     const [message]= await pool.query( query , values );   
