@@ -1,9 +1,12 @@
 import React from 'react';
 import Sidebar from '../components/Sidebar';
 import Chat from '../components/Chat';
+import { UserProvider } from '../contexts/UserContext';
 
 const AppPage = () => {
     return (
+        
+    <UserProvider>
         <div className="flex h-screen">
             {/* Sidebar */}
             <Sidebar />
@@ -14,6 +17,8 @@ const AppPage = () => {
             <Chat/>
             
         </div>
+
+</UserProvider>
     );
 };
 

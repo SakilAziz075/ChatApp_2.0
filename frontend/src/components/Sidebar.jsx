@@ -1,35 +1,10 @@
 import React, { useEffect , useState } from "react";
 import { Link} from 'react-router-dom'
-import {fetchAllUsers } from '../services/userService'
+import { useUsers } from '../contexts/UserContext';
 
 const Sidebar = ()=>{
 
-        const[users, setUsers] = useState([])
-        const[loading,setLoading] = useState([])
-
-
-        useEffect( ()=>{
-
-            const getUsers = async ()=>{
-               
-                try {
-                    const users = await fetchAllUsers();
-                    setUsers(users);
-                } 
-                
-                catch (error) {
-                    console.error('Error fetching users:', error)    
-                }
-
-                finally
-                {
-                    setLoading(false)
-                }
-            }
-
-            getUsers()
-
-        }, []);
+    const { users, loading } = useUsers();
 
         if (loading) {
             return <div className="w-64 bg-gray-800 text-white p-4">Loading users...</div>;

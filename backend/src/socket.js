@@ -15,8 +15,8 @@ export const setupSocket = (server) => {
         cors: {
             origin: 'http://localhost:5173', // Your frontend URL
             methods: ['GET', 'POST'],
-            // allowedHeaders: ['Content-Type'],
-            // credentials: true,  // If using cookies/session
+            allowedHeaders: ['Content-Type'],
+            credentials: true,  // If using cookies/session
         },
     });
 

@@ -2,16 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchMessages } from '../services/messageService';
 import { getSocket } from '../services/socket';
+import { useUsers } from '../contexts/UserContext'
 
 const Chat = () => {
+
+    const { users } = useUsers();  // Accessing users from context
     const { userEmail } = useParams();
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const socket = getSocket();
 
-    console.log('userEmail', userEmail);
-    
+    const chatUser = users.find(user => user.email === userEmail);
 
 
     useEffect(() => {
@@ -21,38 +23,82 @@ const Chat = () => {
         }
     }, [socket]);
 
+
+
     useEffect(() => {
+
+        if (!userEmail) return;
+
         const getMessages = async () => {
             try {
+
                 const messages = await fetchMessages(userEmail);
-                setMessages(messages);
-            } catch (error) {
+                console.log('Fetched messages:', messages);
+
+                const email = localStorage.getItem('email');
+
+                console.log( 'login as :' ,email);
+                console.log('selected user', userEmail);
+                
+
+                const updatedMessages = messages.filter(msg => 
+                    (msg.sender_id === email && msg.receiver_id === userEmail) || 
+                    (msg.sender_id === userEmail && msg.receiver_id === email)
+                ).map(msg => {
+                    return {
+                        ...msg,
+                        sender_id: msg.sender_id === email ? 'me' : msg.sender_id
+                    };
+                });
+
+                console.log("Updated Messages:", updatedMessages);
+                setMessages(updatedMessages);
+            }
+
+            catch (error) {
                 console.error('Error fetching messages:', error);
-            } finally {
+            }
+
+            finally {
                 setLoading(false);
             }
         };
 
         getMessages();
+    }, [userEmail]);
 
-        // Listen for private messages
-        socket.on('private_message', (data) => {
+
+
+
+
+    // Listen for private messages
+    useEffect(() => {
+
+        const handlePrivateMessage = (data) => {
+
+            const email = localStorage.getItem('email');
 
             console.log('Private message received:', data);
 
-            setMessages(prevMessages => [
-                ...prevMessages,
-                { senderEmail: data.senderEmail, message: data.message }
-            ]);
-            
-        });
 
-        return () => {
-            socket.off('private_message'); // Clean up the event listener when component unmounts
+            // Only append messages that are between the logged-in user and the selected chat user
+            if (
+                (data.senderEmail === email && data.receiverEmail === userEmail) ||
+                (data.senderEmail === userEmail && data.receiverEmail === email)
+            ) {
+                setMessages(prevMessages => [
+                    ...prevMessages,
+                    { senderEmail: data.senderEmail === email ? 'me' : data.senderEmail, message: data.message }
+                ]);
+            }
         };
 
+        socket.on('private_message', handlePrivateMessage);
 
-    }, [userEmail]);
+        return () => {
+            socket.off('private_message', handlePrivateMessage);
+        };
+    }, [socket , userEmail]);
 
 
 
@@ -68,27 +114,37 @@ const Chat = () => {
 
         setMessages(prevMessages => [
             ...prevMessages,
-            { senderEmail: 'me',message }
+            { senderEmail: 'me', message }
         ]);
         setMessage('');
     };
+
+
 
     if (loading) {
         return <div>Loading chat...</div>;
     }
 
+
+
+
     return (
         <div className="chat-container">
+            <h2 className="text-xl mb-4">
+                Chatting with {chatUser ? chatUser.fullName : 'Loading...'}
+            </h2>
             <div className="messages">
                 {messages.length > 0 ? (
-                    messages.map((msg, index) => (
-                        <div key={index} className={msg.senderEmail === 'me' ? 'text-right' : 'text-left'}>
-                            <div className={`message ${msg.senderEmail === 'me' ? 'sent' : 'received'}`}>
-                                you are currently chatting with {userEmail}
-                                {msg.message}
+                    messages.map((msg, index) => {
+                        // console.log("Message: ", msg); // Debugging line
+                        return (
+                            <div key={index} className={msg.senderEmail === 'me' ? 'text-right' : 'text-left'}>
+                                <div className={`message ${msg.senderEmail === 'me' ? 'sent' : 'received'}`}>
+                                    {msg.message}
+                                </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 ) : (
                     <div>No messages yet.</div>
                 )}
@@ -106,5 +162,4 @@ const Chat = () => {
         </div>
     );
 };
-
 export default Chat;
