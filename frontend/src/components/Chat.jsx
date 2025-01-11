@@ -16,12 +16,15 @@ const Chat = () => {
     const chatUser = users.find(user => user.email === userEmail);
 
 
+
+
     useEffect(() => {
         const email = localStorage.getItem('email');
         if (email && socket) {
             socket.emit('identify', email);
         }
     }, [socket]);
+
 
 
 
@@ -37,12 +40,12 @@ const Chat = () => {
 
                 const email = localStorage.getItem('email');
 
-                console.log( 'login as :' ,email);
+                console.log('login as :', email);
                 console.log('selected user', userEmail);
-                
 
-                const updatedMessages = messages.filter(msg => 
-                    (msg.sender_id === email && msg.receiver_id === userEmail) || 
+
+                const updatedMessages = messages.filter(msg =>
+                    (msg.sender_id === email && msg.receiver_id === userEmail) ||
                     (msg.sender_id === userEmail && msg.receiver_id === email)
                 ).map(msg => {
                     return {
@@ -69,8 +72,6 @@ const Chat = () => {
 
 
 
-
-
     // Listen for private messages
     useEffect(() => {
 
@@ -82,15 +83,18 @@ const Chat = () => {
 
 
             // Only append messages that are between the logged-in user and the selected chat user
-            if (
-                (data.senderEmail === email && data.receiverEmail === userEmail) ||
-                (data.senderEmail === userEmail && data.receiverEmail === email)
-            ) {
+            // if (
+            //     (data.senderEmail === email && data.receiverEmail === userEmail) ||
+            //     (data.senderEmail === userEmail && data.receiverEmail === email)
+            // ) {
                 setMessages(prevMessages => [
                     ...prevMessages,
-                    { senderEmail: data.senderEmail === email ? 'me' : data.senderEmail, message: data.message }
+                    {
+                        sender_id: data.senderEmail === email ? 'me' : data.senderEmail,
+                        message: data.message
+                    }
                 ]);
-            }
+            // }
         };
 
         socket.on('private_message', handlePrivateMessage);
@@ -98,7 +102,11 @@ const Chat = () => {
         return () => {
             socket.off('private_message', handlePrivateMessage);
         };
-    }, [socket , userEmail]);
+    }, [socket, userEmail]);
+
+
+
+
 
 
 
@@ -114,7 +122,10 @@ const Chat = () => {
 
         setMessages(prevMessages => [
             ...prevMessages,
-            { senderEmail: 'me', message }
+            { 
+                sender_id: 'me', 
+                message 
+            }
         ]);
         setMessage('');
     };
@@ -135,16 +146,13 @@ const Chat = () => {
             </h2>
             <div className="messages">
                 {messages.length > 0 ? (
-                    messages.map((msg, index) => {
-                        // console.log("Message: ", msg); // Debugging line
-                        return (
-                            <div key={index} className={msg.senderEmail === 'me' ? 'text-right' : 'text-left'}>
-                                <div className={`message ${msg.senderEmail === 'me' ? 'sent' : 'received'}`}>
-                                    {msg.message}
-                                </div>
+                    messages.map((msg, index) => (
+                        <div key={index} className={msg.sender_id === 'me' ? 'text-right' : 'text-left'}>
+                            <div className={`message ${msg.sender_id === 'me' ? 'sent' : 'received'}`}>
+                                {msg.message}
                             </div>
-                        );
-                    })
+                        </div>
+                    ))
                 ) : (
                     <div>No messages yet.</div>
                 )}
