@@ -87,13 +87,13 @@ const Chat = () => {
             //     (data.senderEmail === email && data.receiverEmail === userEmail) ||
             //     (data.senderEmail === userEmail && data.receiverEmail === email)
             // ) {
-                setMessages(prevMessages => [
-                    ...prevMessages,
-                    {
-                        sender_id: data.senderEmail === email ? 'me' : data.senderEmail,
-                        message: data.message
-                    }
-                ]);
+            setMessages(prevMessages => [
+                ...prevMessages,
+                {
+                    sender_id: data.senderEmail === email ? 'me' : data.senderEmail,
+                    message: data.message
+                }
+            ]);
             // }
         };
 
@@ -122,9 +122,9 @@ const Chat = () => {
 
         setMessages(prevMessages => [
             ...prevMessages,
-            { 
-                sender_id: 'me', 
-                message 
+            {
+                sender_id: 'me',
+                message
             }
         ]);
         setMessage('');
@@ -140,15 +140,18 @@ const Chat = () => {
 
 
     return (
-        <div className="chat-container">
-            <h2 className="text-xl mb-4">
+        <div className="chat-container flex flex-col h-screen w-screen">
+
+            <h2 className="text-xl mb-4 flex justify-center">
                 Chatting with {chatUser ? chatUser.fullName : 'Loading...'}
             </h2>
-            <div className="messages">
+
+            <div className="messages flex-1 overflow-y-auto p-4">
                 {messages.length > 0 ? (
                     messages.map((msg, index) => (
-                        <div key={index} className={msg.sender_id === 'me' ? 'text-right' : 'text-left'}>
-                            <div className={`message ${msg.sender_id === 'me' ? 'sent' : 'received'}`}>
+                        <div key={index} className={`my-2 ${msg.sender_id === 'me' ? 'text-right' : 'text-left'}`}>
+                            <div className={`inline-block p-3 rounded-lg ${msg.sender_id === 'me' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'
+                                }`}>
                                 {msg.message}
                             </div>
                         </div>
@@ -158,14 +161,19 @@ const Chat = () => {
                 )}
             </div>
 
-            <div>
-                <input
+            <div className="message-input  p-4 flex items-center">
+                <textarea
+                    className="flex-1 rounded-lg p-3 mr-2 border border-gray-300"
                     type="text"
                     placeholder="Type a message..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                 />
-                <button onClick={handleSendMessage}>Send</button>
+                <button
+                    className="bg-blue-600 hover:bg-sky-700 text-white rounded-md px-3 py-2"
+                    onClick={handleSendMessage}>
+                    Send
+                </button>
             </div>
         </div>
     );

@@ -8,12 +8,12 @@ const AppPage = () => {
         
     <UserProvider>
         <div className="flex h-screen">
+            
             {/* Sidebar */}
             <Sidebar />
             
             {/* Chat Area */}
-            <div className="flex-1 bg-gray-100 p-4"></div>
-
+            <div className=" bg-gray-100 p-1.5"></div>
             <Chat/>
             
         </div>
