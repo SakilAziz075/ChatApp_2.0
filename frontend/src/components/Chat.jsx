@@ -162,6 +162,7 @@ const Chat = () => {
             </div>
 
             <div className="message-input  p-4 flex items-center">
+                
                 <textarea
                     className="flex-1 rounded-lg p-3 mr-2 border border-gray-300"
                     type="text"
@@ -169,6 +170,7 @@ const Chat = () => {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                 />
+                
                 <button
                     className="bg-blue-600 hover:bg-sky-700 text-white rounded-md px-3 py-2"
                     onClick={handleSendMessage}>

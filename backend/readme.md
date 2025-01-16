@@ -52,3 +52,13 @@ CREATE TABLE GroupMessages (
     FOREIGN KEY (group_id) REFERENCES Groups(id),
     FOREIGN KEY (sender_id) REFERENCES Users(email)
 );
+
+-- Create GroupAdmins table with ON DELETE CASCADE for group_id
+CREATE TABLE GroupAdmins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    group_id INT NOT NULL,
+    admin_id VARCHAR(255) NOT NULL,
+    assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (group_id) REFERENCES Groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (admin_id) REFERENCES Users(email)
+);
