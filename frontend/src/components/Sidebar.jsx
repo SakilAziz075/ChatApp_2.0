@@ -7,12 +7,14 @@ const Sidebar = ()=>{
     const { users, loading } = useUsers();
 
         if (loading) {
-            return <div className="w-64 bg-gray-800 text-white p-4">Loading users...</div>;
+            return <div className="w-1/3 bg-gray-800 text-white p-4">Loading users...</div>;
         }
 
         return (
-            <div className="w-full max-w-80 bg-gray-800 text-white p-4">
-                <h2 className="text-xl font-bold mb-4 text-center">Users</h2>
+            <div className="w-1/3 bg-gray-800 text-white p-4">
+
+                <h2 className="text-xl font-bold mb-4 text-center">Chats</h2>
+                
                 <ul className="space-y-2">
                     {users.map(user => (
                         <li key={user.email}>

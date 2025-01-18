@@ -130,7 +130,9 @@ const Chat = () => {
         setMessage('');
     };
 
-
+    if (!userEmail || userEmail === localStorage.getItem('email')) {
+        return <div className='text-xl h-screen flex justify-center items-center'>Welcome! Please select another user to start chatting.</div>;
+    }
 
     if (loading) {
         return <div>Loading chat...</div>;
@@ -140,7 +142,7 @@ const Chat = () => {
 
 
     return (
-        <div className="chat-container flex flex-col h-screen w-screen">
+        <div className="chat-container flex flex-col">
 
             <h2 className="text-xl mb-4 flex justify-center">
                 Chatting with {chatUser ? chatUser.fullName : 'Loading...'}
@@ -163,7 +165,7 @@ const Chat = () => {
 
             <div className="message-input  p-4 flex items-center">
                 
-                <textarea
+                <input
                     className="flex-1 rounded-lg p-3 mr-2 border border-gray-300"
                     type="text"
                     placeholder="Type a message..."
