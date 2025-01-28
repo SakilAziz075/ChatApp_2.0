@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { fetchMessages } from '../services/messageService';
 import { getSocket } from '../services/socket';
 import { useUsers } from '../contexts/UserContext'
+import FileTransfer from './File_transfer'
 
 const Chat = () => {
 
@@ -27,7 +28,8 @@ const Chat = () => {
 
 
 
-
+    // Fetching messages between the logged-in user and the selected chat user
+    
     useEffect(() => {
 
         if (!userEmail) return;
@@ -69,6 +71,7 @@ const Chat = () => {
 
         getMessages();
     }, [userEmail]);
+
 
 
 
@@ -162,6 +165,15 @@ const Chat = () => {
                     <div>No messages yet.</div>
                 )}
             </div>
+
+
+
+            <FileTransfer
+                socket={socket}
+                senderEmail={localStorage.getItem('email')}
+                receiverEmail={userEmail}
+            />
+
 
             <div className="message-input  p-4 flex items-center">
                 
