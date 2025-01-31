@@ -28,7 +28,7 @@ const FileTransfer = ({ receiverEmail, senderEmail }) => {
 
             reader.onload = () => {
                 const isLastChunk = offset + CHUNK_SIZE >= file.size;
-                
+
                 // Send chunk to server
                 socket.emit('file_upload', {
                     senderEmail,
@@ -36,6 +36,7 @@ const FileTransfer = ({ receiverEmail, senderEmail }) => {
                     fileName: file.name,
                     chunk: reader.result,
                     isLastChunk,
+                    fileSize: file.size
                 });
 
                 offset += CHUNK_SIZE;
@@ -43,9 +44,19 @@ const FileTransfer = ({ receiverEmail, senderEmail }) => {
 
                 if (!isLastChunk) {
                     readChunk();
-                } else {
+                }
+
+                else {
                     setIsUploading(false);
                     console.log("File upload completed");
+
+                    // Notify receiver about the file message
+                    socket.emit('file_message', {
+                        senderEmail,
+                        receiverEmail,
+                        fileName: file.name,
+                        fileSize: (file.size / 1024).toFixed(2) + " KB" // Convert to KB
+                    });
                 }
             };
 
@@ -75,6 +86,8 @@ const FileTransfer = ({ receiverEmail, senderEmail }) => {
         window.URL.revokeObjectURL(url);
     };
 
+
+
     // Listen for file transfer updates from server
     useEffect(() => {
         // Listen for file chunk and buffer the file
@@ -101,6 +114,7 @@ const FileTransfer = ({ receiverEmail, senderEmail }) => {
             socket.off("file_chunk");
         };
     }, [socket, fileBuffer]);
+
 
     return (
         <div className="file-transfer mt-4">

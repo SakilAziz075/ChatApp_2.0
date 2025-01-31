@@ -11,8 +11,7 @@ const emailToSocket = new Map();
 const uploadDir = "./uploads";
 
 // Ensure the upload directory exists
-if (!fs.existsSync(uploadDir)) 
-{
+if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
 
@@ -74,7 +73,7 @@ export const setupSocket = (server) => {
             pendingFiles.forEach((file) => {
                 const filePath = path.join(uploadDir, file);
                 const [senderEmail, receiverEmail, fileName] = file.split('-');
-                
+
                 console.log(`Sending stored file ${fileName} to ${email} from ${senderEmail}`);
                 const fileBuffer = fs.readFileSync(filePath);
 
@@ -93,7 +92,7 @@ export const setupSocket = (server) => {
                         console.log(`File ${fileName} sent and deleted from server.`);
                     }
 
-                    }  
+                }
 
             })
 
@@ -114,22 +113,30 @@ export const setupSocket = (server) => {
 
             // Generate file path with both sender's and receiver's email
             const filePath = path.join(uploadDir, `${senderEmail}-${receiverEmail}-${fileName}`);
-            
+
             const receiverSocketId = emailToSocket.get(receiverEmail);
 
             if (receiverSocketId) {
                 // Receiver is online: send chunk directly
                 console.log(`Sending file chunk for ${fileName} from ${senderEmail} to ${receiverEmail}`);
                 io.to(receiverSocketId).emit('file_chunk', { senderEmail, fileName, chunk, isLastChunk });
-            } 
             
-            if (isLastChunk) {
-                console.log(`Send successfully to ${receiverEmail}` );
+            
+                if (isLastChunk) {
+                    console.log(`Send successfully to ${receiverEmail}`);
+    
+                    // Notify the receiver about the file transfer as a message
+                    const fileSize= (chunk.length / 1024).toFixed(2) + " KB"
+                    const fileMessage = `📂 sent a file: ${fileName} (${fileSize} bytes)`;
+                    io.to(receiverSocketId).emit('private_message', { senderEmail, message: fileMessage });
+    
+                }
             }
 
             else {
                 // Receiver is offline: save chunk temporarily
-                console.log(`Storing file chunk for offline user ${receiverEmail}`);
+                
+                // console.log(`Storing file chunk for offline user ${receiverEmail}`);
                 fs.appendFileSync(filePath, Buffer.from(chunk), 'binary');
 
                 if (isLastChunk) {
@@ -162,9 +169,7 @@ export const setupSocket = (server) => {
             }
         });
 
-        
 
-        
 
         //Handling private message
         socket.on('private_message', async (data) => {

@@ -94,16 +94,20 @@ const Chat = () => {
                 ...prevMessages,
                 {
                     sender_id: data.senderEmail === email ? 'me' : data.senderEmail,
-                    message: data.message
+                    message: data.message,
+                    fileName: data.fileName || null,
+                    fileSize: data.fileSize || null
                 }
             ]);
             // }
         };
 
         socket.on('private_message', handlePrivateMessage);
+        socket.on('file_message', handlePrivateMessage); // Listening for file messages
 
         return () => {
             socket.off('private_message', handlePrivateMessage);
+            socket.off('file_message', handlePrivateMessage);
         };
     }, [socket, userEmail]);
 
@@ -152,19 +156,26 @@ const Chat = () => {
             </h2>
 
             <div className="messages flex-1 overflow-y-auto p-4">
-                {messages.length > 0 ? (
-                    messages.map((msg, index) => (
-                        <div key={index} className={`my-2 ${msg.sender_id === 'me' ? 'text-right' : 'text-left'}`}>
-                            <div className={`inline-block p-3 rounded-lg ${msg.sender_id === 'me' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'
-                                }`}>
-                                {msg.message}
-                            </div>
+    {messages.length > 0 ? (
+        messages.map((msg, index) => (
+            <div key={index} className={`my-2 ${msg.sender_id === 'me' ? 'text-right' : 'text-left'}`}>
+                <div className={`inline-block p-3 rounded-lg ${msg.sender_id === 'me' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'}`}>
+                    {msg.fileName ? (
+                        <div>
+                            📁 <strong>{msg.sender_id}</strong> sent a file:  
+                            <br />
+                            <span className="text-sm">{msg.fileName} ({msg.fileSize})</span>
                         </div>
-                    ))
-                ) : (
-                    <div>No messages yet.</div>
-                )}
+                    ) : (
+                        msg.message
+                    )}
+                </div>
             </div>
+        ))
+    ) : (
+        <div>No messages yet.</div>
+    )}
+</div>
 
 
 
