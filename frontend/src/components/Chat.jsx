@@ -29,7 +29,7 @@ const Chat = () => {
 
 
     // Fetching messages between the logged-in user and the selected chat user
-    
+
     useEffect(() => {
 
         if (!userEmail) return;
@@ -156,26 +156,26 @@ const Chat = () => {
             </h2>
 
             <div className="messages flex-1 overflow-y-auto p-4">
-    {messages.length > 0 ? (
-        messages.map((msg, index) => (
-            <div key={index} className={`my-2 ${msg.sender_id === 'me' ? 'text-right' : 'text-left'}`}>
-                <div className={`inline-block p-3 rounded-lg ${msg.sender_id === 'me' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'}`}>
-                    {msg.fileName ? (
-                        <div>
-                            📁 <strong>{msg.sender_id}</strong> sent a file:  
-                            <br />
-                            <span className="text-sm">{msg.fileName} ({msg.fileSize})</span>
+                {messages.length > 0 ? (
+                    messages.map((msg, index) => (
+                        <div key={index} className={`my-2 ${msg.sender_id === 'me' ? 'text-right' : 'text-left'}`}>
+                            <div className={`inline-block p-3 rounded-lg ${msg.sender_id === 'me' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'}`}>
+                                {msg.fileName ? (
+                                    <div>
+                                        📁 <strong>{msg.sender_id}</strong> sent a file:
+                                        <br />
+                                        <span className="text-sm">{msg.fileName} ({msg.fileSize})</span>
+                                    </div>
+                                ) : (
+                                    msg.message
+                                )}
+                            </div>
                         </div>
-                    ) : (
-                        msg.message
-                    )}
-                </div>
+                    ))
+                ) : (
+                    <div>No messages yet.</div>
+                )}
             </div>
-        ))
-    ) : (
-        <div>No messages yet.</div>
-    )}
-</div>
 
 
 
@@ -183,11 +183,22 @@ const Chat = () => {
                 socket={socket}
                 senderEmail={localStorage.getItem('email')}
                 receiverEmail={userEmail}
+                
+                onFileSent={(fileName, fileSize) => {
+                    setMessages(prevMessages => [
+                        ...prevMessages,
+                        {
+                            sender_id: 'me',
+                            fileName,
+                            fileSize
+                        }
+                    ]);
+                }}
             />
 
 
             <div className="message-input  p-4 flex items-center">
-                
+
                 <input
                     className="flex-1 rounded-lg p-3 mr-2 border border-gray-300"
                     type="text"
@@ -195,7 +206,7 @@ const Chat = () => {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                 />
-                
+
                 <button
                     className="bg-blue-600 hover:bg-sky-700 text-white rounded-md px-3 py-2"
                     onClick={handleSendMessage}>

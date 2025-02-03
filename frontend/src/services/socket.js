@@ -6,7 +6,7 @@ let socket;
 export const getSocket = () => {
   if (!socket) {
     // Initialize the socket connection
-    socket = io('http://localhost:3000', { // Replace with your backend URL
+    socket = io('https://localhost:3000', { // Replace with your backend URL
       auth: {
         token: localStorage.getItem('token'), // Attach JWT token for authentication
       },

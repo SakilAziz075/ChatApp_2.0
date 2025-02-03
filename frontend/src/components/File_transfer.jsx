@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getSocket } from '../services/socket';
 
-const FileTransfer = ({ receiverEmail, senderEmail }) => {
+const FileTransfer = ({ receiverEmail, senderEmail , onFileSent}) => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
@@ -57,6 +57,10 @@ const FileTransfer = ({ receiverEmail, senderEmail }) => {
                         fileName: file.name,
                         fileSize: (file.size / 1024).toFixed(2) + " KB" // Convert to KB
                     });
+
+                    if (onFileSent) {
+                        onFileSent(file.name, (file.size / 1024).toFixed(2) + " KB");
+                    }
                 }
             };
 

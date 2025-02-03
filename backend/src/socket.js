@@ -95,79 +95,65 @@ export const setupSocket = (server) => {
                 }
 
             })
-
-
-
-
         });
 
 
-        //Handling file upload in chucks
-        socket.on('file_upload', (data) => {
-            const { senderEmail, receiverEmail, fileName, chunk, isLastChunk } = data;
+        // Handling file upload in chunks (async/await version)
+        socket.on('file_upload', async (data) => {
+            try {
+                const { senderEmail, receiverEmail, fileName, chunk, isLastChunk } = data;
 
-            if (!senderEmail || !receiverEmail || !fileName || !chunk) {
-                console.error('Missing required fields in file_upload data:', data);
-                return;
-            }
-
-            // Generate file path with both sender's and receiver's email
-            const filePath = path.join(uploadDir, `${senderEmail}-${receiverEmail}-${fileName}`);
-
-            const receiverSocketId = emailToSocket.get(receiverEmail);
-
-            if (receiverSocketId) {
-                // Receiver is online: send chunk directly
-                console.log(`Sending file chunk for ${fileName} from ${senderEmail} to ${receiverEmail}`);
-                io.to(receiverSocketId).emit('file_chunk', { senderEmail, fileName, chunk, isLastChunk });
-            
-            
-                if (isLastChunk) {
-                    console.log(`Send successfully to ${receiverEmail}`);
-    
-                    // Notify the receiver about the file transfer as a message
-                    const fileSize= (chunk.length / 1024).toFixed(2) + " KB"
-                    const fileMessage = `📂 sent a file: ${fileName} (${fileSize} bytes)`;
-                    io.to(receiverSocketId).emit('private_message', { senderEmail, message: fileMessage });
-    
+                if (!senderEmail || !receiverEmail || !fileName || !chunk) {
+                    console.error('Missing required fields in file_upload data:', data);
+                    return;
                 }
-            }
 
-            else {
-                // Receiver is offline: save chunk temporarily
+                // Generate file path with both sender's and receiver's email
+                const filePath = path.join(uploadDir, `${senderEmail}-${receiverEmail}-${fileName}`);
+                const receiverSocketId = emailToSocket.get(receiverEmail);
+
+                if (receiverSocketId) {
+                    // Receiver is online: send chunk directly
+                    console.log(`Sending file chunk for ${fileName} from ${senderEmail} to ${receiverEmail}`);
+                    io.to(receiverSocketId).emit('file_chunk', { senderEmail, fileName, chunk, isLastChunk });
+
+                    if (isLastChunk) {
+                        console.log(`File successfully sent to ${receiverEmail}`);
+
+                        // Notify the receiver about the file transfer as a message
+                        const fileSize = (chunk.length / 1024).toFixed(2) + " KB";
+                        const fileMessage = `📂 sent a file: ${fileName} (${fileSize} KB)`;
+                        io.to(receiverSocketId).emit('private_message', { senderEmail, message: fileMessage });
+
+                        // Save the file transfer message to the database
+                        await dbSendMessage(senderEmail, receiverEmail, fileMessage, null);
+                        console.log('File transfer message saved to database');
+                    }
+
+
+                } 
                 
-                // console.log(`Storing file chunk for offline user ${receiverEmail}`);
-                fs.appendFileSync(filePath, Buffer.from(chunk), 'binary');
+                else {
+                    // Receiver is offline: save chunk temporarily
+                    await fs.promises.appendFile(filePath, Buffer.from(chunk), 'binary');
+                    console.log(`Chunk saved for offline user ${receiverEmail}`);
 
-                if (isLastChunk) {
-                    console.log(`File upload completed and stored for offline user ${receiverEmail}`);
+                    if (isLastChunk) {
+                        console.log(`File upload completed and stored for offline user ${receiverEmail}`);
+
+                        // Save the file transfer message to the database for the offline user
+                        const fileSize = (chunk.length / 1024).toFixed(2) + " KB";
+                        const fileMessage = `📂 sent a file: ${fileName} (${fileSize})`;
+
+                        await dbSendMessage(senderEmail, receiverEmail, fileMessage, null);
+                        console.log('File transfer message saved to database for offline user');
+                    }
                 }
+            } catch (error) {
+                console.error('Error handling file upload:', error);
             }
         });
 
-
-        // Handling file download request
-        socket.on('file_download', (data) => {
-
-            const { receiverEmail, fileName } = data;
-
-            const filePath = path.join(uploadDir, `${receiverEmail}-${fileName}`);
-
-            if (fs.existsSync(filePath)) {
-
-                // Read the file and send it to the receiver
-                const fileBuffer = fs.readFileSync(filePath);
-                socket.emit('file_data', { fileName, file: fileBuffer });
-
-                // Delete the file after sending it
-                fs.unlinkSync(filePath);
-                console.log(`File ${fileName} has been sent and deleted`);
-            }
-
-            else {
-                socket.emit('file_error', { message: 'File not found' });
-            }
-        });
 
 
 
