@@ -9,8 +9,8 @@ const JWT_EXPIRATION = '7d'
 
 
 //signUp handler
-export const signUp = async (req, res) => {
-    const { fullName, email, password } = req.body;
+export const signUp = async (req, res) => { 
+    const { fullName, email, password ,publicKey} = req.body;
 
     try {
         // Check if user already exists
@@ -24,7 +24,7 @@ export const signUp = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Save user to the database
-        await pool.query('INSERT INTO Users (fullName, email, password) VALUES (?, ?, ?)', [fullName, email, hashedPassword]);
+        await pool.query('INSERT INTO Users (fullName, email, password , publicKey) VALUES (?, ?, ?, ?)', [fullName, email, hashedPassword, publicKey]);
 
         res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {

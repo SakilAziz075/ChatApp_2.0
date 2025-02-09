@@ -14,6 +14,7 @@ export const UserProvider = ( {children}) => {
 
     const [users , setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedUserPublicKey, setSelectedUserPublicKey] = useState(null);
 
     useEffect(() => {
 
@@ -34,7 +35,7 @@ export const UserProvider = ( {children}) => {
 
 
     return (
-        <UserContext.Provider value={{ users, loading }}>
+        <UserContext.Provider value={{  users, loading, selectedUserPublicKey, setSelectedUserPublicKey }}>
             {children}
         </UserContext.Provider>
     );

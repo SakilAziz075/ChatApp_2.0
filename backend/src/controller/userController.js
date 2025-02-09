@@ -6,7 +6,7 @@ export const getAllUsers = async (req, res) => {
 
     try {
         // Query to get all users, excluding the currently authenticated user
-        const [users] = await pool.query('SELECT id, email, created_at, fullName FROM Users WHERE email != ?', [userEmail]);
+        const [users] = await pool.query('SELECT id, email, created_at, fullName ,publicKey FROM Users WHERE email != ?', [userEmail]);
 
         if (users.length === 0) {
             return res.status(404).json({ message: 'No users found' });

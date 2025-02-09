@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom'; 
 import api from '../services/api.js';
+import { generateECDHPublicKey } from '../utils/cryptoUtil.js'
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,11 +13,21 @@ const Signup = () => {
 
   const handleSignup = async (e) => {
     e.preventDefault();
+
     try {
-      const response = await api.post('auth/signup', formData);
+      const publicKey = await generateECDHPublicKey(formData.email, formData.password);
+
+      const signupData = {
+        ...formData,
+        publicKey,
+      };
+
+      const response = await api.post('auth/signup', signupData);
       console.log('Signup successful:', response.data);
       alert('SignUp successful. You can now log in');
-    } catch (error) {
+    } 
+    
+    catch (error) {
       console.error('Signup failed:', error.response?.data || error.message);
       alert('Signup failed: ' + (error.response?.data?.message || 'Something went wrong.'));
     }

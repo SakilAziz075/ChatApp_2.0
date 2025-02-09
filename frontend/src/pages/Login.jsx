@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import Link from react-router-dom
 import api from '../services/api';
+import { generatePrivateKey } from '../utils/cryptoUtil.js'
+
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -20,10 +22,16 @@ const Login = () => {
       localStorage.setItem('email', email); // Store the email for future use
 
 
+      const privateKey = await generatePrivateKey(email , password);
+      console.log('Generated private key:', privateKey);
+      localStorage.setItem('privateKey', privateKey); 
+
 
       // Redirect to the chat page or home page
       navigate(`/chat/${email}`);
-    } catch (error) {
+    }
+    
+    catch (error) {
       console.error('Login failed:', error.response?.data || error.message);
       alert('Login failed: ' + (error.response?.data?.message || 'Something went wrong.'));
     }

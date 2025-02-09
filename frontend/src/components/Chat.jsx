@@ -5,9 +5,12 @@ import { getSocket } from '../services/socket';
 import { useUsers } from '../contexts/UserContext'
 import FileTransfer from './File_transfer'
 
+import { computeSharedSecret } from '../utils/cryptoUtil.js'; 
+
 const Chat = () => {
 
-    const { users } = useUsers();  // Accessing users from context
+    const { users , selectedUserPublicKey} = useUsers();  // Accessing users from context
+    
     const { userEmail } = useParams();
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState('');
@@ -15,7 +18,7 @@ const Chat = () => {
     const socket = getSocket();
 
     const chatUser = users.find(user => user.email === userEmail);
-
+    const [sharedSecret, setSharedSecret] = useState(null);
 
 
 
@@ -25,6 +28,22 @@ const Chat = () => {
             socket.emit('identify', email);
         }
     }, [socket]);
+
+
+    // Generate shared secret when selected user public key is available
+    useEffect(() => {
+        const userPrivateKey = localStorage.getItem('privateKey');  // Assuming the private key is stored in localStorage
+
+        console.log('fire')
+        console.log('private key' ,userPrivateKey)
+        console.log('selectedUser Public key',selectedUserPublicKey)
+        if (userPrivateKey && selectedUserPublicKey) {
+            // Generate the shared secret between the logged-in user and the selected user
+            const secret = computeSharedSecret(userPrivateKey, selectedUserPublicKey);
+            setSharedSecret(secret);
+            console.log('Shared Secret:', secret);
+        }
+    }, [userEmail]);
 
 
 
