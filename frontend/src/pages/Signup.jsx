@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom'; 
 import api from '../services/api.js';
-import { generateECDHPublicKey } from '../utils/cryptoUtil.js'
+import { generateECDHPublicKey , generatePrivateKey} from '../utils/cryptoUtil.js'
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -15,7 +15,9 @@ const Signup = () => {
     e.preventDefault();
 
     try {
-      const publicKey = await generateECDHPublicKey(formData.email, formData.password);
+
+      const privateKey =  generatePrivateKey(formData.email, formData.password)
+      const publicKey =  generateECDHPublicKey(privateKey);
 
       const signupData = {
         ...formData,
