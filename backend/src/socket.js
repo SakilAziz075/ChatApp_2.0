@@ -160,9 +160,9 @@ export const setupSocket = (server) => {
         //Handling private message
         socket.on('private_message', async (data) => {
 
-            console.log('date: ', data);
+            console.log('data: ', data);
 
-            const { senderEmail, receiverEmail, message } = data;
+            const {  senderEmail, receiverEmail, encryptedData, iv } = data;
 
             console.log('receiverEmail:', receiverEmail);
 
@@ -173,11 +173,11 @@ export const setupSocket = (server) => {
             console.log('receiverID :', receiverSocketId)
 
             if (receiverSocketId) {
-                io.to(receiverSocketId).emit('private_message', { senderEmail, message });
+                io.to(receiverSocketId).emit('private_message', { senderEmail, message : encryptedData , receiverEmail, iv});
             }
 
             try {
-                const result = await dbSendMessage(senderEmail, receiverEmail, message, null);
+                const result = await dbSendMessage(senderEmail, receiverEmail, encryptedData, null);
                 console.log('Private message saved to database:', result.message);
 
                 // Emit success back to the sender

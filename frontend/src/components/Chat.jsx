@@ -5,12 +5,12 @@ import { getSocket } from '../services/socket';
 import { useUsers } from '../contexts/UserContext'
 import FileTransfer from './File_transfer'
 
-import { computeSharedSecret } from '../utils/cryptoUtil.js'; 
+import { computeSharedSecret, encryptMessage, decryptMessage } from '../utils/cryptoUtil.js';
 
 const Chat = () => {
 
-    const { users , selectedUserPublicKey} = useUsers();  // Accessing users from context
-    
+    const { users, selectedUserPublicKey } = useUsers();  // Accessing users from context
+
     const { userEmail } = useParams();
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState('');
@@ -35,15 +35,15 @@ const Chat = () => {
         const userPrivateKey = localStorage.getItem('privateKey');  // Assuming the private key is stored in localStorage
 
         console.log('fire')
-        console.log('private key' ,userPrivateKey)
-        console.log('selectedUser Public key',selectedUserPublicKey)
+        console.log('private key', userPrivateKey)
+        console.log('selectedUser Public key', selectedUserPublicKey)
         if (userPrivateKey && selectedUserPublicKey) {
             // Generate the shared secret between the logged-in user and the selected user
             const secret = computeSharedSecret(userPrivateKey, selectedUserPublicKey);
             setSharedSecret(secret);
             console.log('Shared Secret:', secret);
         }
-    }, [userEmail]);
+    }, [ selectedUserPublicKey]);
 
 
 
@@ -71,7 +71,7 @@ const Chat = () => {
                 ).map(msg => {
                     return {
                         ...msg,
-                        sender_id: msg.sender_id === email ? 'me' : msg.sender_id
+                        sender_id: msg.sender_id === email ? 'me' : msg.sender_id,
                     };
                 });
 
@@ -100,25 +100,47 @@ const Chat = () => {
         const handlePrivateMessage = (data) => {
 
             const email = localStorage.getItem('email');
+            console.log('sharedSecret', sharedSecret);
 
             console.log('Private message received:', data);
 
+            let decryptedMessage = data.message;
 
-            // Only append messages that are between the logged-in user and the selected chat user
-            // if (
-            //     (data.senderEmail === email && data.receiverEmail === userEmail) ||
-            //     (data.senderEmail === userEmail && data.receiverEmail === email)
-            // ) {
-            setMessages(prevMessages => [
-                ...prevMessages,
-                {
-                    sender_id: data.senderEmail === email ? 'me' : data.senderEmail,
-                    message: data.message,
-                    fileName: data.fileName || null,
-                    fileSize: data.fileSize || null
+
+            if (sharedSecret && data.iv) {
+                try {
+                    console.log("firing decryption");
+                    console.log('sharedSecret', sharedSecret);
+                    console.log('Data', data.message);
+
+                    decryptedMessage = decryptMessage(data.message, data.iv, sharedSecret)
                 }
-            ]);
-            // }
+                catch (error) {
+                    console.error("error while decrypting the message : ", error);
+
+                }
+            }
+
+            console.log("Current chat user:", userEmail);
+            console.log("Message from:", data.senderEmail, "to:", data.receiverEmail);
+
+
+            console.log('decrypted message', decryptedMessage)
+            // Only append messages that are between the logged-in user and the selected chat user
+            if (
+                (data.senderEmail === email && data.receiverEmail === userEmail) ||
+                (data.senderEmail === userEmail && data.receiverEmail === email)
+            ) {
+                setMessages(prevMessages => [
+                    ...prevMessages,
+                    {
+                        sender_id: data.senderEmail === email ? 'me' : data.senderEmail,
+                        message: decryptedMessage,
+                        fileName: data.fileName || null,
+                        fileSize: data.fileSize || null
+                    }
+                ]);
+            }
         };
 
         socket.on('private_message', handlePrivateMessage);
@@ -144,7 +166,11 @@ const Chat = () => {
         const receiverEmail = userEmail;
 
         console.log('Sending message:', { senderEmail, receiverEmail, message }); // Debugging line
-        socket.emit('private_message', { senderEmail, receiverEmail, message });
+
+        const { iv, encryptedData } = encryptMessage(message, sharedSecret);
+        console.log('Sending Encrypted Message:', { senderEmail, receiverEmail, encryptedData, iv });
+
+        socket.emit('private_message', { senderEmail, receiverEmail, encryptedData, iv });
 
         setMessages(prevMessages => [
             ...prevMessages,
@@ -202,7 +228,7 @@ const Chat = () => {
                 socket={socket}
                 senderEmail={localStorage.getItem('email')}
                 receiverEmail={userEmail}
-                
+
                 onFileSent={(fileName, fileSize) => {
                     setMessages(prevMessages => [
                         ...prevMessages,
