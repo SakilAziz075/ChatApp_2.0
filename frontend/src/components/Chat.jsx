@@ -32,18 +32,23 @@ const Chat = () => {
 
     // Generate shared secret when selected user public key is available
     useEffect(() => {
-        const userPrivateKey = localStorage.getItem('privateKey');  // Assuming the private key is stored in localStorage
 
-        console.log('fire')
+        console.log('firing computing Shared Secret on change of Public Key');
+
+
+        const userPrivateKey = localStorage.getItem('privateKey');  
+        let storedPublicKey = selectedUserPublicKey || localStorage.getItem('selectedUserPublicKey')
+
         console.log('private key', userPrivateKey)
-        console.log('selectedUser Public key', selectedUserPublicKey)
-        if (userPrivateKey && selectedUserPublicKey) {
+        console.log('selectedUser Public key', storedPublicKey)
+        if (userPrivateKey && storedPublicKey) {
+
             // Generate the shared secret between the logged-in user and the selected user
-            const secret = computeSharedSecret(userPrivateKey, selectedUserPublicKey);
+            const secret = computeSharedSecret(userPrivateKey, storedPublicKey);
             setSharedSecret(secret);
             console.log('Shared Secret:', secret);
         }
-    }, [ selectedUserPublicKey]);
+    }, [selectedUserPublicKey]);
 
 
 
@@ -89,7 +94,7 @@ const Chat = () => {
         };
 
         getMessages();
-    }, [userEmail]);
+    }, [userEmail , sharedSecret]);
 
 
 
@@ -100,6 +105,9 @@ const Chat = () => {
         const handlePrivateMessage = (data) => {
 
             const email = localStorage.getItem('email');
+
+            console.log('firing Handle Private Message');
+
             console.log('sharedSecret', sharedSecret);
 
             console.log('Private message received:', data);
@@ -150,7 +158,7 @@ const Chat = () => {
             socket.off('private_message', handlePrivateMessage);
             socket.off('file_message', handlePrivateMessage);
         };
-    }, [socket, userEmail]);
+    }, [socket, userEmail , sharedSecret]);
 
 
 
@@ -160,7 +168,11 @@ const Chat = () => {
 
 
     const handleSendMessage = () => {
-        if (!message) return;
+        if (!message) {
+            return;
+        }
+
+        console.log('firing Handle Send Message');
 
         const senderEmail = localStorage.getItem('email');
         const receiverEmail = userEmail;

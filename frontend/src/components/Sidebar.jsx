@@ -8,6 +8,8 @@ const Sidebar = () => {
 
 
     const handleUserClick = (user) => {
+
+        localStorage.setItem('selectedUserPublicKey', user.publicKey); //Handle resetting the page , sharedSecret comes NULL bug
         setSelectedUserPublicKey(user.publicKey);
         console.log("Selected User Public Key: ", user.publicKey);
     }
