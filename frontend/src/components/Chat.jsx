@@ -74,9 +74,27 @@ const Chat = () => {
                     (msg.sender_id === email && msg.receiver_id === userEmail) ||
                     (msg.sender_id === userEmail && msg.receiver_id === email)
                 ).map(msg => {
+
+                    let decryptedMessage = msg.message;
+
+                    if(msg.iv && sharedSecret){
+
+                        try{
+                            console.log('Decrypting Fetched message...')
+                            decryptedMessage = decryptMessage(msg.message , msg.iv, sharedSecret)
+                        }
+                        catch(error)
+                        {
+                            console.error("error while decrypting Message" , error);
+                            
+                        }
+                    }
+
                     return {
                         ...msg,
-                        sender_id: msg.sender_id === email ? 'me' : msg.sender_id,
+                        sender_id: msg.sender_id  === email ? 'me' : msg.sender_id,
+                        message: decryptedMessage,
+
                     };
                 });
 

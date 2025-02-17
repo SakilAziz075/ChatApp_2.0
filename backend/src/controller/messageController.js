@@ -35,7 +35,7 @@ export const getMessage = async (req , res) =>{
 
 
 //Controller for sending a message
-export const sendMessage = async (senderId, receiverId, message, groupId) =>{
+export const sendMessage = async (senderId, receiverId, message, iv , groupId) =>{
 
     try{
 
@@ -49,8 +49,8 @@ export const sendMessage = async (senderId, receiverId, message, groupId) =>{
         
         else {
             await pool.query(
-                'INSERT INTO Messages (sender_id , receiver_id , message) VALUES (?,?,?)',
-                [senderId,receiverId,message]
+                'INSERT INTO Messages (sender_id , receiver_id , message , iv) VALUES (?,?,?,?)',
+                [senderId,receiverId,message , iv]
             );
         }
 

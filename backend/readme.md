@@ -18,6 +18,7 @@ CREATE TABLE Messages (
     sender_id VARCHAR(255) NOT NULL,  -- Changed from VARCHAR(20) to VARCHAR(255) to match email length
     receiver_id VARCHAR(255) NOT NULL,  -- Changed from VARCHAR(20) to VARCHAR(255) to match email length
     message TEXT NOT NULL,
+    iv VARCHAR(255) NOT NULL;
     sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES Users(email),
     FOREIGN KEY (receiver_id) REFERENCES Users(email)

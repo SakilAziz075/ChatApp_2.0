@@ -177,7 +177,7 @@ export const setupSocket = (server) => {
             }
 
             try {
-                const result = await dbSendMessage(senderEmail, receiverEmail, encryptedData, null);
+                const result = await dbSendMessage(senderEmail, receiverEmail, encryptedData, iv);
                 console.log('Private message saved to database:', result.message);
 
                 // Emit success back to the sender
