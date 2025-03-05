@@ -36,7 +36,7 @@ const Chat = () => {
         console.log('firing computing Shared Secret on change of Public Key');
 
 
-        const userPrivateKey = localStorage.getItem('privateKey');  
+        const userPrivateKey = localStorage.getItem('privateKey');
         let storedPublicKey = selectedUserPublicKey || localStorage.getItem('selectedUserPublicKey')
 
         console.log('private key', userPrivateKey)
@@ -77,22 +77,21 @@ const Chat = () => {
 
                     let decryptedMessage = msg.message;
 
-                    if(msg.iv && sharedSecret){
+                    if (msg.iv && sharedSecret) {
 
-                        try{
+                        try {
                             console.log('Decrypting Fetched message...')
-                            decryptedMessage = decryptMessage(msg.message , msg.iv, sharedSecret)
+                            decryptedMessage = decryptMessage(msg.message, msg.iv, sharedSecret)
                         }
-                        catch(error)
-                        {
-                            console.error("error while decrypting Message" , error);
-                            
+                        catch (error) {
+                            console.error("error while decrypting Message", error);
+
                         }
                     }
 
                     return {
                         ...msg,
-                        sender_id: msg.sender_id  === email ? 'me' : msg.sender_id,
+                        sender_id: msg.sender_id === email ? 'me' : msg.sender_id,
                         message: decryptedMessage,
 
                     };
@@ -112,7 +111,7 @@ const Chat = () => {
         };
 
         getMessages();
-    }, [userEmail , sharedSecret]);
+    }, [userEmail, sharedSecret]);
 
 
 
@@ -176,7 +175,7 @@ const Chat = () => {
             socket.off('private_message', handlePrivateMessage);
             socket.off('file_message', handlePrivateMessage);
         };
-    }, [socket, userEmail , sharedSecret]);
+    }, [socket, userEmail, sharedSecret]);
 
 
 
@@ -234,6 +233,7 @@ const Chat = () => {
                 {messages.length > 0 ? (
                     messages.map((msg, index) => (
                         <div key={index} className={`my-2 ${msg.sender_id === 'me' ? 'text-right' : 'text-left'}`}>
+                            
                             <div className={`inline-block p-3 rounded-lg ${msg.sender_id === 'me' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'}`}>
                                 {msg.fileName ? (
                                     <div>
@@ -245,31 +245,36 @@ const Chat = () => {
                                     msg.message
                                 )}
                             </div>
+                        
+                        
+                        
                         </div>
                     ))
                 ) : (
                     <div>No messages yet.</div>
                 )}
+
+                <FileTransfer
+                    socket={socket}
+                    senderEmail={localStorage.getItem('email')}
+                    receiverEmail={userEmail}
+
+                    onFileSent={(fileName, fileSize) => {
+                        setMessages(prevMessages => [
+                            ...prevMessages,
+                            {
+                                sender_id: 'me',
+                                fileName,
+                                fileSize
+                            }
+                        ]);
+                    }}
+                />
             </div>
 
 
 
-            <FileTransfer
-                socket={socket}
-                senderEmail={localStorage.getItem('email')}
-                receiverEmail={userEmail}
 
-                onFileSent={(fileName, fileSize) => {
-                    setMessages(prevMessages => [
-                        ...prevMessages,
-                        {
-                            sender_id: 'me',
-                            fileName,
-                            fileSize
-                        }
-                    ]);
-                }}
-            />
 
 
             <div className="message-input  p-4 flex items-center">

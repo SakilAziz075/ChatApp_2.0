@@ -77,6 +77,17 @@ const FileTransfer = ({ receiverEmail, senderEmail, onFileSent }) => {
         setIsUploading(true);
         setUploadProgress(0);
         uploadFileInChunks(selectedFile);
+
+        setFileMessages(prevMessages => [
+            ...prevMessages,
+            {
+                sender_id: senderEmail,
+                fileName: selectedFile.name,
+                fileSize: selectedFile.size,
+                fileData: null,
+                fileType: selectedFile.type,
+
+            }])
     };
 
     // Handle file download
@@ -147,14 +158,12 @@ const FileTransfer = ({ receiverEmail, senderEmail, onFileSent }) => {
             <div className="messages flex-1 overflow-y-auto p-4">
                 {fileMessages.length > 0 ? (
                     fileMessages.map((file, index) => (
-                        <div key={index} className={`my-2 ${file.sender_id === 'me' ? 'text-right' : 'text-left'}`}>
-                            <div className={`inline-block p-3 rounded-lg ${file.sender_id === 'me' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'}`}>
+                        <div key={index} className={`my-2 ${file.sender_id === localStorage.getItem('email') ? 'text-right' : 'text-left'}`}>
+                            <div className={`inline-block p-3 rounded-lg ${file.sender_id === localStorage.getItem('email') ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'}`}>
                                 {file.fileName ? (
                                     <div>
-                                        📁 <strong>{file.sender_id}</strong> sent a file:
-                                        <br />
-                                        <span className="text-sm">{file.fileName} ({file.fileSize})</span>
-                                        <p>{file.senderEmail} sent a file:</p>
+                                        📁 <strong>{file.sender_id === localStorage.getItem('email') ? 'You' : file.senderEmail}</strong> sent a file
+                                        <br/>
                                         <p>{file.fileName}</p>
                                         <button
                                             onClick={() => handleFileDownload(file)}
@@ -169,7 +178,7 @@ const FileTransfer = ({ receiverEmail, senderEmail, onFileSent }) => {
                         </div>
                     ))
                 ) : (
-                    <div>No messages yet.</div>
+                    <div>No Files yet.</div>
                 )}
             </div>
 
@@ -189,7 +198,7 @@ const FileTransfer = ({ receiverEmail, senderEmail, onFileSent }) => {
                 ))}
             </div> */}
 
-            
+
         </div>
     );
 };
