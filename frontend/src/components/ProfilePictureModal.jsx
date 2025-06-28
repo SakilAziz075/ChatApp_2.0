@@ -6,6 +6,8 @@ const ProfilePictureModal = ({ isOpen , onClose , onUpload})=>{
     const [selectedFile , setSelectedFile] = useState(null);
     const { users } = useUsers();
     const [ currentUser , setCurrentUser] = useState(null)
+    const [ previewURL , setPreviewURL] = useState(null)
+    const [ isFullImageOpen , setIsFullImageOpen] = useState(null)
 
     useEffect( ()=>{
       const email = localStorage.getItem('email')
@@ -15,12 +17,20 @@ const ProfilePictureModal = ({ isOpen , onClose , onUpload})=>{
 
         const foundUser = users.find( user => user.email ===email)
         setCurrentUser(foundUser)
+        setPreviewURL(foundUser?.profilePicture || null);
+
       }
     }, [users]);
 
 
     const handleFileChange = (event)=>{
         setSelectedFile(event.target.files[0])
+
+        if(file)
+        {
+          setSelectedFile(file);
+          setPreviewURL(URL.createObjectURL(file));
+        }
     }
 
 

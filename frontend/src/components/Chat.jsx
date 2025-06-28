@@ -20,6 +20,7 @@ const Chat = () => {
     const chatUser = users.find(user => user.email === userEmail);
     const [sharedSecret, setSharedSecret] = useState(null);
 
+    console.log("context API users: " , chatUser)
 
 
     useEffect(() => {

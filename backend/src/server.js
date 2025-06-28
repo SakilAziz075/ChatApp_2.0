@@ -21,6 +21,6 @@ const server = https.createServer(sslOptions, app);
 //Setup WebSocket
 setupSocket(server);
 
-server.listen(PORT, ()=>{
+server.listen(PORT,'0.0.0.0' ,()=>{
     console.log(`Server running  on https://localhost:${PORT}`);
 });
