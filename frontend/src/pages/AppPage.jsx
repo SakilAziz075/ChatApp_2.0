@@ -1,28 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Chat from '../components/Chat';
-import Navbar from '../components/Navbar'; 
+import GroupModal from '../components/GroupModal';
 import { UserProvider } from '../contexts/UserContext';
+import { Plus, LogOut } from 'lucide-react';
+import { handleLogout, handleNewGroup } from '../utils/userAction';
+import './AppPage.css'; 
 
 const AppPage = () => {
-    return (
-        <UserProvider>
-            <div className="flex flex-col ">
-                
-                <Navbar />
-                
-                <div className="flex flex-row-1 h-screen w-full">
-                    <Sidebar />           
-                             
-                    {/* Chat Area */}
-                    <div className='w-full'>
-                        <Chat />
-                    </div>
-                </div>
-                
+  const [showGroupModal, setShowGroupModal] = useState(false);
+
+  return (
+    <UserProvider>
+      <div className="app-container">
+        {/* Sidebar */}
+        <Sidebar />
+
+        {/* Main Section */}
+        <div className="main-content">
+          {/* Top Action Bar */}
+          <div className="topbar">
+            <h1 className="app-title">Chat Application</h1>
+            <div className="topbar-buttons">
+              <button className="icon-button" onClick={() => handleNewGroup(setShowGroupModal)}>
+                <Plus size={16} />
+                <span>Create Group</span>
+              </button>
+              <button className="icon-button logout" onClick={handleLogout}>
+                <LogOut size={16} />
+                <span>Logout</span>
+              </button>
             </div>
-        </UserProvider>
-    );
+          </div>
+
+          {/* Chat Area */}
+          <div className="chat-area">
+            <Chat />
+          </div>
+        </div>
+
+        {/* Group Modal */}
+        <GroupModal isOpen={showGroupModal} onClose={() => setShowGroupModal(false)} />
+      </div>
+    </UserProvider>
+  );
 };
 
 export default AppPage;

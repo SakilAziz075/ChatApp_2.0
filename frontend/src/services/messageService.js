@@ -2,6 +2,7 @@ import api from './api';
 
 export const fetchMessages = async () => {
     const response = await api.get(`/message/messages/`); // Get messages for the selected user
+    console.log(response.data.message)
     return response.data.message;
 };
 

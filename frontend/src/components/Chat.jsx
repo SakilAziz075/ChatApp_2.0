@@ -13,25 +13,31 @@ import './Chat.css'
 
 const Chat = () => {
   const { users, selectedUserPublicKey } = useUsers();
+  
   const { userEmail } = useParams();
+  const chatUser = users.find(user => user.email === userEmail);
+
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const socket = getSocket();
-  const chatUser = users.find(user => user.email === userEmail);
   const [sharedSecret, setSharedSecret] = useState(null);
-  const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+
+  const socket = getSocket();
+
+  const fileInputRef = useRef(null);
   const bottomRef = useRef(null);
   const fileBufferRef = useRef(new Map());
+
 
   useEffect(() => {
     const email = localStorage.getItem('email');
     if (email && socket) socket.emit('identify', email);
   }, [socket]);
 
+  
   useEffect(() => {
     const userPrivateKey = localStorage.getItem('privateKey');
     const storedPublicKey = selectedUserPublicKey || localStorage.getItem('selectedUserPublicKey');
@@ -40,6 +46,8 @@ const Chat = () => {
       setSharedSecret(secret);
     }
   }, [selectedUserPublicKey]);
+
+
 
   useEffect(() => {
     if (!userEmail) return;
@@ -114,6 +122,7 @@ const Chat = () => {
         }]);
       }
     };
+
     socket.on('private_message', handlePrivateMessage);
     socket.on('file_message', handlePrivateMessage);
     return () => {
@@ -121,6 +130,9 @@ const Chat = () => {
       socket.off('file_message', handlePrivateMessage);
     };
   }, [socket, sharedSecret, userEmail]);
+
+
+
 
   useEffect(() => {
     const handleFileChunk = (data) => {
@@ -157,6 +169,8 @@ const Chat = () => {
     };
   }, [socket]);
 
+
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -178,12 +192,15 @@ const Chat = () => {
     setMessage('');
   };
 
+
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setSelectedFile(file);
     setTimeout(() => handleFileUpload(file), 200);
   };
+
 
   const handleFileUpload = (file) => {
     if (!file) return;
@@ -217,86 +234,90 @@ const Chat = () => {
     });
   };
 
+
+
   const formatFileSize = (size) => {
     const i = Math.floor(Math.log(size) / Math.log(1024));
     return +(size / Math.pow(1024, i)).toFixed(2) + ' ' + ['B', 'KB', 'MB', 'GB'][i];
   };
 
+
   if (!userEmail || userEmail === localStorage.getItem('email')) {
     return <div className="flex items-center justify-center h-full text-xl">Select a user to start chatting</div>;
   }
 
+  
   return (
-<div className="chat-container">
-  <div className="chat-header">
-    <div className="chat-user-info">
-      <div className="chat-user-avatar">
-        {chatUser?.fullName?.[0]}
-      </div>
-      <div>
-        <h2 className="chat-user-name">{chatUser?.fullName}</h2>
-        <p className="chat-user-status">{chatUser?.isOnline ? 'Online' : 'Offline'}</p>
-      </div>
-    </div>
-  </div>
-
-  <div className="chat-messages" id="chat-scroll">
-    {messages.map((msg, index) => (
-      <div
-        key={index}
-        className={`chat-message ${msg.isOwn ? 'own' : 'other'}`}
-      >
-        <div className="chat-bubble">
-          {msg.type === 'file' ? (
-            <div>
-              <p className="file-title">📁 {msg.fileData.name}</p>
-              <a href={msg.fileData.url} download={msg.fileData.name} className="file-download">
-                Download ({msg.fileData.size})
-              </a>
-            </div>
-          ) : (
-            <p>{msg.content}</p>
-          )}
+    <div className="chat-container">
+      <div className="chat-header">
+        <div className="chat-user-info">
+          <div className="chat-user-avatar">
+            {chatUser?.fullName?.[0]}
+          </div>
+          <div>
+            <h2 className="chat-user-name">{chatUser?.fullName}</h2>
+            <p className="chat-user-status">{chatUser?.isOnline ? 'Online' : 'Offline'}</p>
+          </div>
         </div>
       </div>
-    ))}
-    <div ref={bottomRef} />
-  </div>
 
-  <div className="chat-input-area">
-  <input
-    type="file"
-    ref={fileInputRef}
-    onChange={handleFileChange}
-    style={{ display: 'none' }}
-  />
+      <div className="chat-messages" id="chat-scroll">
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`chat-message ${msg.isOwn ? 'own' : 'other'}`}
+          >
+            <div className="chat-bubble">
+              {msg.type === 'file' ? (
+                <div>
+                  <p className="file-title">📁 {msg.fileData.name}</p>
+                  <a href={msg.fileData.url} download={msg.fileData.name} className="file-download">
+                    Download ({msg.fileData.size})
+                  </a>
+                </div>
+              ) : (
+                <p>{msg.content}</p>
+              )}
+            </div>
+          </div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
 
-  <button className="chat-icon-btn" onClick={() => fileInputRef.current?.click()}>
-    <Paperclip size={20} />
-  </button>
+      <div className="chat-input-area">
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+        />
 
-  <input
-    type="text"
-    placeholder="Type a message..."
-    value={message}
-    onChange={(e) => setMessage(e.target.value)}
-    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-    className="chat-text-input"
-  />
+        <button className="chat-icon-btn" onClick={() => fileInputRef.current?.click()}>
+          <Paperclip size={20} />
+        </button>
 
-  <button className="chat-send-btn" onClick={handleSendMessage}>
-    <Send size={20} />
-  </button>
-</div>
+        <input
+          type="text"
+          placeholder="Type a message..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+          className="chat-text-input"
+        />
+
+        <button className="chat-send-btn" onClick={handleSendMessage}>
+          <Send size={20} />
+        </button>
+      </div>
 
 
-  {isUploading && (
-    <div className="upload-status">
-      Uploading: {uploadProgress}%
-      <progress value={uploadProgress} max="100"></progress>
+      {isUploading && (
+        <div className="upload-status">
+          Uploading: {uploadProgress}%
+          <progress value={uploadProgress} max="100"></progress>
+        </div>
+      )}
     </div>
-  )}
-</div>
   );
 };
 

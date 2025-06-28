@@ -6,6 +6,9 @@ import './Sidebar.css';
 const Sidebar = () => {
   const { users, loading, setSelectedUserPublicKey } = useUsers();
   const [activeTab, setActiveTab] = useState('contacts');
+  const email = localStorage.getItem('email');
+
+  const currentUser = users.find(user => user.email === email);
 
   const handleUserClick = (user) => {
     localStorage.setItem('selectedUserPublicKey', user.publicKey);
@@ -21,10 +24,12 @@ const Sidebar = () => {
     <div className="sidebar">
       {/* Profile */}
       <div className="sidebar-profile">
-        <div className="profile-avatar">U</div>
+        <div className="profile-avatar">
+          {currentUser?.fullName?.[0] || 'U'}
+        </div>
         <div className="profile-info">
-          <h3>Your Name</h3>
-          <p>Click to edit profile</p>
+          <h3>{currentUser?.fullName || 'My Name'}</h3>
+          <p>{currentUser ? 'Click to edit profile' : 'User not found'}</p>
         </div>
       </div>
 
@@ -43,22 +48,24 @@ const Sidebar = () => {
 
       {/* Contact List */}
       <div className="sidebar-list">
-        {users.map((user) => (
-          <Link
-            to={`/chat/${user.email}`}
-            key={user.email}
-            onClick={() => handleUserClick(user)}
-            className="chat-item"
-          >
-            <div className="avatar-container">
-              <div className="avatar">{user.fullName?.[0] || 'U'}</div>
-              <span className="online-dot" />
-            </div>
-            <div className="chat-info">
-              <div className="chat-name">{user.fullName}</div>
-              <div className="chat-subtext">Click to chat</div>
-            </div>
-          </Link>
+        {users
+          .filter(user => user.email !== email) // hide current user from contacts
+          .map((user) => (
+            <Link
+              to={`/chat/${user.email}`}
+              key={user.email}
+              onClick={() => handleUserClick(user)}
+              className="chat-item"
+            >
+              <div className="avatar-container">
+                <div className="avatar">{user.fullName?.[0] || 'U'}</div>
+                <span className="online-dot" />
+              </div>
+              <div className="chat-info">
+                <div className="chat-name">{user.fullName}</div>
+                <div className="chat-subtext">Click to chat</div>
+              </div>
+            </Link>
         ))}
       </div>
     </div>
