@@ -1,5 +1,5 @@
 import React from 'react';
-import FileMessage from './FileMessages';
+import FileMessage from './File_transfer';
 
 const FileMessageModal = ({ isOpen, onClose }) => {
     if (!isOpen) return null;

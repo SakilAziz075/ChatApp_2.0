@@ -1,0 +1,134 @@
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  border: 1px solid #ccc;
+  font-family: sans-serif;
+}
+
+.chat-header {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  background: #f9f9f9;
+}
+
+.chat-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chat-user-avatar {
+  width: 36px;
+  height: 36px;
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.chat-user-name {
+  margin: 0;
+  font-size: 16px;
+}
+
+.chat-user-status {
+  font-size: 12px;
+  color: #666;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  background: #f4f4f4;
+}
+
+.chat-message {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.chat-message.own {
+  justify-content: flex-end;
+}
+
+.chat-message.other {
+  justify-content: flex-start;
+}
+
+.chat-bubble {
+  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: #007bff;
+  color: white;
+}
+
+.chat-message.other .chat-bubble {
+  background: #e0e0e0;
+  color: black;
+}
+
+.chat-input-area {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #ccc;
+  background: #fff;
+}
+
+.chat-text-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  margin: 0 10px;
+  outline: none;
+}
+
+.chat-send-btn,
+.chat-icon-btn {
+  padding: 8px;
+  border: none;
+  background: #007bff;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-send-btn:hover,
+.chat-icon-btn:hover {
+  background: #0056b3;
+}
+
+.chat-send-btn svg,
+.chat-icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+
+.upload-status {
+  padding: 10px;
+  font-size: 12px;
+  background: #fff6d6;
+  border-top: 1px solid #ccc;
+}
+
+.file-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.file-download {
+  display: inline-block;
+  font-size: 12px;
+  text-decoration: underline;
+  color: #0056b3;
+}

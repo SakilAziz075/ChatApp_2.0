@@ -1,300 +1,303 @@
-import React, { useEffect, useState } from 'react';
+// Custom Chat UI with real-time file transfer and auto-scroll
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchMessages } from '../services/messageService';
 import { getSocket } from '../services/socket';
-import { useUsers } from '../contexts/UserContext'
-import FileTransfer from './File_transfer'
+import { uploadFileInChunks } from '../services/fileUploader';
+import { useUsers } from '../contexts/UserContext';
+import { computeSharedSecret, encryptMessage, decryptMessage } from '../utils/cryptoUtil';
+import { Send, Paperclip } from 'lucide-react';
 
-import { computeSharedSecret, encryptMessage, decryptMessage } from '../utils/cryptoUtil.js';
+
+import './Chat.css'
 
 const Chat = () => {
+  const { users, selectedUserPublicKey } = useUsers();
+  const { userEmail } = useParams();
+  const [messages, setMessages] = useState([]);
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const socket = getSocket();
+  const chatUser = users.find(user => user.email === userEmail);
+  const [sharedSecret, setSharedSecret] = useState(null);
+  const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const bottomRef = useRef(null);
+  const fileBufferRef = useRef(new Map());
 
-    const { users, selectedUserPublicKey } = useUsers();  // Accessing users from context
+  useEffect(() => {
+    const email = localStorage.getItem('email');
+    if (email && socket) socket.emit('identify', email);
+  }, [socket]);
 
-    const { userEmail } = useParams();
-    const [messages, setMessages] = useState([]);
-    const [message, setMessage] = useState('');
-    const [loading, setLoading] = useState(true);
-    const socket = getSocket();
+  useEffect(() => {
+    const userPrivateKey = localStorage.getItem('privateKey');
+    const storedPublicKey = selectedUserPublicKey || localStorage.getItem('selectedUserPublicKey');
+    if (userPrivateKey && storedPublicKey) {
+      const secret = computeSharedSecret(userPrivateKey, storedPublicKey);
+      setSharedSecret(secret);
+    }
+  }, [selectedUserPublicKey]);
 
-    const chatUser = users.find(user => user.email === userEmail);
-    const [sharedSecret, setSharedSecret] = useState(null);
-
-    console.log("context API users: " , chatUser)
-
-
-    useEffect(() => {
+  useEffect(() => {
+    if (!userEmail) return;
+    const getMessages = async () => {
+      try {
+        const rawMessages = await fetchMessages(userEmail);
         const email = localStorage.getItem('email');
-        if (email && socket) {
-            socket.emit('identify', email);
-        }
-    }, [socket]);
-
-
-    // Generate shared secret when selected user public key is available
-    useEffect(() => {
-
-        console.log('firing computing Shared Secret on change of Public Key');
-
-
-        const userPrivateKey = localStorage.getItem('privateKey');
-        let storedPublicKey = selectedUserPublicKey || localStorage.getItem('selectedUserPublicKey')
-
-        console.log('private key', userPrivateKey)
-        console.log('selectedUser Public key', storedPublicKey)
-        if (userPrivateKey && storedPublicKey) {
-
-            // Generate the shared secret between the logged-in user and the selected user
-            const secret = computeSharedSecret(userPrivateKey, storedPublicKey);
-            setSharedSecret(secret);
-            console.log('Shared Secret:', secret);
-        }
-    }, [selectedUserPublicKey]);
-
-
-
-    // Fetching messages between the logged-in user and the selected chat user
-
-    useEffect(() => {
-
-        if (!userEmail) return;
-
-        const getMessages = async () => {
-            try {
-
-                const messages = await fetchMessages(userEmail);
-                console.log('Fetched messages:', messages);
-
-                const email = localStorage.getItem('email');
-
-                console.log('login as :', email);
-                console.log('selected user', userEmail);
-
-
-                const updatedMessages = messages.filter(msg =>
-                    (msg.sender_id === email && msg.receiver_id === userEmail) ||
-                    (msg.sender_id === userEmail && msg.receiver_id === email)
-                ).map(msg => {
-
-                    let decryptedMessage = msg.message;
-
-                    if (msg.iv && sharedSecret) {
-
-                        try {
-                            console.log('Decrypting Fetched message...')
-                            decryptedMessage = decryptMessage(msg.message, msg.iv, sharedSecret)
-                        }
-                        catch (error) {
-                            console.error("error while decrypting Message", error);
-
-                        }
-                    }
-
-                    return {
-                        ...msg,
-                        sender_id: msg.sender_id === email ? 'me' : msg.sender_id,
-                        message: decryptedMessage,
-
-                    };
-                });
-
-                console.log("Updated Messages:", updatedMessages);
-                setMessages(updatedMessages);
+        const updatedMessages = rawMessages
+          .filter(msg =>
+            (msg.sender_id === email && msg.receiver_id === userEmail) ||
+            (msg.sender_id === userEmail && msg.receiver_id === email))
+          .map(msg => {
+            let decrypted = msg.message;
+            if (msg.iv && sharedSecret) {
+              try {
+                decrypted = decryptMessage(msg.message, msg.iv, sharedSecret);
+              } catch (err) {
+                console.error('Decryption failed', err);
+              }
             }
-
-            catch (error) {
-                console.error('Error fetching messages:', error);
-            }
-
-            finally {
-                setLoading(false);
-            }
-        };
-
-        getMessages();
-    }, [userEmail, sharedSecret]);
-
-
-
-
-    // Listen for private messages
-    useEffect(() => {
-
-        const handlePrivateMessage = (data) => {
-
-            const email = localStorage.getItem('email');
-
-            console.log('firing Handle Private Message');
-
-            console.log('sharedSecret', sharedSecret);
-
-            console.log('Private message received:', data);
-
-            let decryptedMessage = data.message;
-
-
-            if (sharedSecret && data.iv) {
-                try {
-                    console.log("firing decryption");
-                    console.log('sharedSecret', sharedSecret);
-                    console.log('Data', data.message);
-
-                    decryptedMessage = decryptMessage(data.message, data.iv, sharedSecret)
-                }
-                catch (error) {
-                    console.error("error while decrypting the message : ", error);
-
-                }
-            }
-
-            console.log("Current chat user:", userEmail);
-            console.log("Message from:", data.senderEmail, "to:", data.receiverEmail);
-
-
-            console.log('decrypted message', decryptedMessage)
-            // Only append messages that are between the logged-in user and the selected chat user
-            if (
-                (data.senderEmail === email && data.receiverEmail === userEmail) ||
-                (data.senderEmail === userEmail && data.receiverEmail === email)
-            ) {
-                setMessages(prevMessages => [
-                    ...prevMessages,
-                    {
-                        sender_id: data.senderEmail === email ? 'me' : data.senderEmail,
-                        message: decryptedMessage,
-                        fileName: data.fileName || null,
-                        fileSize: data.fileSize || null
-                    }
-                ]);
-            }
-        };
-
-        socket.on('private_message', handlePrivateMessage);
-        socket.on('file_message', handlePrivateMessage); // Listening for file messages
-
-        return () => {
-            socket.off('private_message', handlePrivateMessage);
-            socket.off('file_message', handlePrivateMessage);
-        };
-    }, [socket, userEmail, sharedSecret]);
-
-
-
-
-
-
-
-
-    const handleSendMessage = () => {
-        if (!message) {
-            return;
-        }
-
-        console.log('firing Handle Send Message');
-
-        const senderEmail = localStorage.getItem('email');
-        const receiverEmail = userEmail;
-
-        console.log('Sending message:', { senderEmail, receiverEmail, message }); // Debugging line
-
-        const { iv, encryptedData } = encryptMessage(message, sharedSecret);
-        console.log('Sending Encrypted Message:', { senderEmail, receiverEmail, encryptedData, iv });
-
-        socket.emit('private_message', { senderEmail, receiverEmail, encryptedData, iv });
-
-        setMessages(prevMessages => [
-            ...prevMessages,
-            {
-                sender_id: 'me',
-                message
-            }
-        ]);
-        setMessage('');
+            return {
+              id: msg.id,
+              sender: msg.sender_id === email ? 'me' : msg.sender_id,
+              content: decrypted,
+              timestamp: new Date(msg.timestamp || Date.now()),
+              type: msg.fileName ? 'file' : 'text',
+              fileData: msg.fileName ? {
+                name: msg.fileName,
+                size: msg.fileSize,
+                url: '#' // optional placeholder
+              } : null,
+              isOwn: msg.sender_id === email
+            };
+          });
+        setMessages(updatedMessages);
+      } catch (err) {
+        console.error('Fetch failed', err);
+      } finally {
+        setLoading(false);
+      }
     };
+    getMessages();
+  }, [userEmail, sharedSecret]);
 
-    if (!userEmail || userEmail === localStorage.getItem('email')) {
-        return <div className='text-xl h-screen flex justify-center items-center'>Welcome! Please select another user to start chatting.</div>;
-    }
+  useEffect(() => {
+    const handlePrivateMessage = (data) => {
+      const email = localStorage.getItem('email');
+      let decrypted = data.message;
+      if (data.iv && sharedSecret) {
+        try {
+          decrypted = decryptMessage(data.message, data.iv, sharedSecret);
+        } catch (err) {
+          console.error('Runtime decryption error', err);
+        }
+      }
+      if (
+        (data.senderEmail === email && data.receiverEmail === userEmail) ||
+        (data.senderEmail === userEmail && data.receiverEmail === email)
+      ) {
+        setMessages(prev => [...prev, {
+          id: Date.now(),
+          sender: data.senderEmail === email ? 'me' : data.senderEmail,
+          content: decrypted,
+          timestamp: new Date(),
+          type: data.fileName ? 'file' : 'text',
+          fileData: data.fileName ? {
+            name: data.fileName,
+            size: data.fileSize,
+            url: '#'
+          } : null,
+          isOwn: data.senderEmail === email
+        }]);
+      }
+    };
+    socket.on('private_message', handlePrivateMessage);
+    socket.on('file_message', handlePrivateMessage);
+    return () => {
+      socket.off('private_message', handlePrivateMessage);
+      socket.off('file_message', handlePrivateMessage);
+    };
+  }, [socket, sharedSecret, userEmail]);
 
-    if (loading) {
-        return <div>Loading chat...</div>;
-    }
+  useEffect(() => {
+    const handleFileChunk = (data) => {
+      const { senderEmail, fileName, chunk, isLastChunk, fileSize } = data;
+      const bufferMap = fileBufferRef.current;
+      const buffer = bufferMap.get(fileName) || [];
+      buffer.push(chunk);
+      bufferMap.set(fileName, buffer);
 
+      if (isLastChunk) {
+        const completeBlob = new Blob(buffer);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            sender: senderEmail === localStorage.getItem('email') ? 'me' : senderEmail,
+            content: fileName,
+            timestamp: new Date(),
+            type: 'file',
+            fileData: {
+              name: fileName,
+              size: fileSize,
+              url: URL.createObjectURL(completeBlob)
+            },
+            isOwn: senderEmail === localStorage.getItem('email')
+          }
+        ]);
+        bufferMap.delete(fileName);
+      }
+    };
+    socket.on('file_chunk', handleFileChunk);
+    return () => {
+      socket.off('file_chunk', handleFileChunk);
+    };
+  }, [socket]);
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
+  const handleSendMessage = () => {
+    if (!message.trim()) return;
+    const senderEmail = localStorage.getItem('email');
+    const receiverEmail = userEmail;
+    const { iv, encryptedData } = encryptMessage(message, sharedSecret);
+    socket.emit('private_message', { senderEmail, receiverEmail, encryptedData, iv });
+    setMessages(prev => [...prev, {
+      id: Date.now(),
+      sender: 'me',
+      content: message,
+      timestamp: new Date(),
+      type: 'text',
+      isOwn: true
+    }]);
+    setMessage('');
+  };
 
-    return (
-        <div className="chat-container flex flex-col">
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setTimeout(() => handleFileUpload(file), 200);
+  };
 
-            <h2 className="text-xl mb-4 flex justify-center">
-                Chatting with {chatUser ? chatUser.fullName : 'Loading...'}
-            </h2>
+  const handleFileUpload = (file) => {
+    if (!file) return;
+    setIsUploading(true);
+    setUploadProgress(0);
+    uploadFileInChunks({
+      socket,
+      file,
+      receiverEmail: userEmail,
+      onProgress: (progress) => setUploadProgress(progress),
+      onComplete: (fileName, fileSize) => {
+        setIsUploading(false);
+        setSelectedFile(null);
+        setMessages(prev => [
+          ...prev,
+          {
+            id: Date.now(),
+            sender: 'me',
+            content: fileName,
+            timestamp: new Date(),
+            type: 'file',
+            fileData: {
+              name: fileName,
+              size: fileSize,
+              url: URL.createObjectURL(file)
+            },
+            isOwn: true
+          }
+        ]);
+      }
+    });
+  };
 
-            <div className="messages flex-1 overflow-y-auto p-4">
-                {messages.length > 0 ? (
-                    messages.map((msg, index) => (
-                        <div key={index} className={`my-2 ${msg.sender_id === 'me' ? 'text-right' : 'text-left'}`}>
-                            
-                            <div className={`inline-block p-3 rounded-lg ${msg.sender_id === 'me' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'}`}>
-                                {msg.fileName ? (
-                                    <div>
-                                        📁 <strong>{msg.sender_id}</strong> sent a file:
-                                        <br />
-                                        <span className="text-sm">{msg.fileName} ({msg.fileSize})</span>
-                                    </div>
-                                ) : (
-                                    msg.message
-                                )}
-                            </div>
-                        
-                        
-                        
-                        </div>
-                    ))
-                ) : (
-                    <div>No messages yet.</div>
-                )}
+  const formatFileSize = (size) => {
+    const i = Math.floor(Math.log(size) / Math.log(1024));
+    return +(size / Math.pow(1024, i)).toFixed(2) + ' ' + ['B', 'KB', 'MB', 'GB'][i];
+  };
 
-                <FileTransfer
-                    socket={socket}
-                    senderEmail={localStorage.getItem('email')}
-                    receiverEmail={userEmail}
+  if (!userEmail || userEmail === localStorage.getItem('email')) {
+    return <div className="flex items-center justify-center h-full text-xl">Select a user to start chatting</div>;
+  }
 
-                    onFileSent={(fileName, fileSize) => {
-                        setMessages(prevMessages => [
-                            ...prevMessages,
-                            {
-                                sender_id: 'me',
-                                fileName,
-                                fileSize
-                            }
-                        ]);
-                    }}
-                />
+  return (
+<div className="chat-container">
+  <div className="chat-header">
+    <div className="chat-user-info">
+      <div className="chat-user-avatar">
+        {chatUser?.fullName?.[0]}
+      </div>
+      <div>
+        <h2 className="chat-user-name">{chatUser?.fullName}</h2>
+        <p className="chat-user-status">{chatUser?.isOnline ? 'Online' : 'Offline'}</p>
+      </div>
+    </div>
+  </div>
+
+  <div className="chat-messages" id="chat-scroll">
+    {messages.map((msg, index) => (
+      <div
+        key={index}
+        className={`chat-message ${msg.isOwn ? 'own' : 'other'}`}
+      >
+        <div className="chat-bubble">
+          {msg.type === 'file' ? (
+            <div>
+              <p className="file-title">📁 {msg.fileData.name}</p>
+              <a href={msg.fileData.url} download={msg.fileData.name} className="file-download">
+                Download ({msg.fileData.size})
+              </a>
             </div>
-
-
-
-
-
-
-            <div className="message-input  p-4 flex items-center">
-
-                <input
-                    className="flex-1 rounded-lg p-3 mr-2 border border-gray-300"
-                    type="text"
-                    placeholder="Type a message..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                />
-
-                <button
-                    className="bg-blue-600 hover:bg-sky-700 text-white rounded-md px-3 py-2"
-                    onClick={handleSendMessage}>
-                    Send
-                </button>
-            </div>
+          ) : (
+            <p>{msg.content}</p>
+          )}
         </div>
-    );
+      </div>
+    ))}
+    <div ref={bottomRef} />
+  </div>
+
+  <div className="chat-input-area">
+  <input
+    type="file"
+    ref={fileInputRef}
+    onChange={handleFileChange}
+    style={{ display: 'none' }}
+  />
+
+  <button className="chat-icon-btn" onClick={() => fileInputRef.current?.click()}>
+    <Paperclip size={20} />
+  </button>
+
+  <input
+    type="text"
+    placeholder="Type a message..."
+    value={message}
+    onChange={(e) => setMessage(e.target.value)}
+    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+    className="chat-text-input"
+  />
+
+  <button className="chat-send-btn" onClick={handleSendMessage}>
+    <Send size={20} />
+  </button>
+</div>
+
+
+  {isUploading && (
+    <div className="upload-status">
+      Uploading: {uploadProgress}%
+      <progress value={uploadProgress} max="100"></progress>
+    </div>
+  )}
+</div>
+  );
 };
+
 export default Chat;
